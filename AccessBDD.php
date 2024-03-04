@@ -66,6 +66,10 @@ class AccessBDD {
             switch($table){
                 case "exemplaire" :
                     return $this->selectExemplairesRevue($champs['id']);
+                case "dvd" :
+                    return $this->selectAllDvd($champs['id']);
+                case "revue" :
+                    return $this->selectAllRevues($champs['id']);
                 default:                    
                     // cas d'un select sur une table avec recherche sur des champs
                     return $this->selectTableOnConditons($table, $champs);					
