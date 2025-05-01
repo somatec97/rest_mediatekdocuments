@@ -1,4 +1,34 @@
-RewriteEngine on
-RewriteRule ^([a-zA-Z]+)$ mediatekdocuments.php?table=$1
-RewriteRule ^([a-zA-Z]+)/({.*})$ mediatekdocuments.php?table=$1&champs=$2
-RewriteRule ^([a-zA-Z]+)/([a-zA-Z0-9]+)/({.*})$ mediatekdocuments.php?table=$1&id=$2&champs=$3
+#RewriteEngine on
+#RewriteRule ^([a-zA-Z]+)$ mediatekdocuments.php?table=$1
+#RewriteRule ^([a-zA-Z]+)/({.*})$ mediatekdocuments.php?table=$1&champs=$2
+#RewriteRule ^([a-zA-Z]+)/([a-zA-Z0-9]+)/({.*})$ mediatekdocuments.php?table=$1&id=$2&champs=$3
+#RewriteEngine On
+
+# Ex : /commandedocument → ?table=commandedocument
+#RewriteRule ^([a-zA-Z]+)$ mediatekdocuments.php?table=$1 [QSA,L]
+
+# Ex : /commandedocument/11 → ?table=commandedocument&id=11
+#RewriteRule ^([a-zA-Z]+)/([a-zA-Z0-9]+)$ mediatekdocuments.php?table=$1&id=$2 [QSA,L]
+
+# Ex : /commandedocument/11/{"key":"value"} → ?table=commandedocument&id=11&champs={"key":"value"}
+#RewriteRule ^([a-zA-Z]+)/([a-zA-Z0-9]+)/({.*})$ mediatekdocuments.php?table=$1&id=$2&champs=$3 [QSA,L]
+#RewriteEngine On
+
+# GET /livre → ?table=livre
+#RewriteRule ^([a-zA-Z]+)$ mediatekdocuments.php?table=$1 [QSA,L]
+
+# GET /livre/123 → ?table=livre&id=123
+#RewriteRule ^([a-zA-Z]+)/([a-zA-Z0-9]+)$ mediatekdocuments.php?table=$1&id=$2 [QSA,L]
+#RewriteRule ^([a-zA-Z]+)/({.*})$ mediatekdocuments.php?table=$1&champs=$2 [QSA,L]
+
+
+RewriteEngine On
+
+# GET /livre/{"id":"3",...} → ?table=livre&champs={...}
+RewriteRule ^([a-zA-Z]+)/({.*})$ mediatekdocuments.php?table=$1&champs=$2 [QSA,L]
+
+# GET /livre/123 → ?table=livre&id=123
+RewriteRule ^([a-zA-Z]+)/([a-zA-Z0-9]+)$ mediatekdocuments.php?table=$1&id=$2 [QSA,L]
+
+# GET /livre → ?table=livre
+RewriteRule ^([a-zA-Z]+)$ mediatekdocuments.php?table=$1 [QSA,L]

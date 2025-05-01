@@ -1,0 +1,76 @@
+C#
+//private void TabCmdLivres_Enter(object sender, EventArgs e)
+        //{
+        //    try
+        //    {
+        //        // Charger les livres
+        //        lesLivres = controller.GetAllLivres();
+        //        if (lesLivres == null || lesLivres.Count == 0)
+        //            MessageBox.Show("Aucun livre trouvé", "Information");
+
+        //        // Charger les suivis
+        //        lesSuivis = controller.GetAllSuivis();
+        //        if (lesSuivis == null || lesSuivis.Count == 0)
+        //            MessageBox.Show("Aucun suivi chargé", "Erreur");
+        //        else
+        //            RemplirCbxCommandeLivreLibelleSuivi("en cours"); // Initialisation par défaut
+
+        //        // Désactiver les groupes
+        //        gbxInfosCommandeLivre.Enabled = false;
+        //        gbxEtapeSuivi.Enabled = false;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        MessageBox.Show($"Erreur lors du chargement : {ex.Message}", "Erreur");
+        //    }
+        //    // Dans TabCmdLivres_Enter, ajoutez ce debug :
+        //    MessageBox.Show($"Nombre de suivis chargés: {lesSuivis?.Count ?? 0}\n" +
+        //                   $"Type de cbxEtapeSuiviCmdLivre: {cbxEtapeSuiviCmdLivre.GetType()}\n" +
+        //                   $"Est-ce le même contrôle que les autres? {cbxEtapeSuiviCmdLivre.Name}");
+        //}
+        private void InitializeComboBox()
+        {
+            // 1. Réinitialisation radicale
+            cbxEtapeSuiviCmdLivre.Items.Clear();
+            cbxEtapeSuiviCmdLivre.DataSource = null;
+            cbxEtapeSuiviCmdLivre.DisplayMember = null;
+            cbxEtapeSuiviCmdLivre.ValueMember = null;
+
+            // 2. Chargement alternatif des données
+            var etapesValides = new List<string> { "en cours", "relancée", "livrée", "réglée" };
+            // Méthode A: Simple ajout manuel
+            cbxEtapeSuiviCmdLivre.Items.AddRange(etapesValides.ToArray());
+            // 4. Sélection par défaut
+            cbxEtapeSuiviCmdLivre.SelectedIndex = 0; // Force la sélection
+
+            // 5. Debug visuel immédiat
+            MessageBox.Show($"Contenu après init: {string.Join(", ", cbxEtapeSuiviCmdLivre.Items.Cast<object>())}");
+        }
+		 /// <summary>
+        /// Initialise le formulaire pour ajouter une nouvelle commande de livre
+        /// avec l'étape de suivi par défaut = "en cours"
+        /// </summary>
+        private void InitNouvelleCommandeLivre()
+        {
+            // Tu peux aussi vider les champs si tu veux
+            txbNumNewCmdLivre.Text = "";
+            txbNbExemplCmdLivre.Text = "";
+            txbMontantCmdLivre.Text = "";
+            dateTimePickerCmdLivre.Value = DateTime.Today;
+            txtbNumCmdLivreRecherche.Text = "";
+
+            // Remplir le combo avec l'étape de suivi "en cours"
+            cbxEtapeSuiviCmdLivre.Items.Clear();
+            cbxEtapeSuiviCmdLivre.Items.Add("en cours");
+            cbxEtapeSuiviCmdLivre.SelectedIndex = 0;
+        }
+		  /// <summary>
+        /// Affiche la groupBox des suivis
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnInfoCmdLivre_Click(object sender, EventArgs e)
+        {
+            gbxEtapeSuivi.Enabled = true;
+            gbxInfosCommandeLivre.Enabled = false;
+        }

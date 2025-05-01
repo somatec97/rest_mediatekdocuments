@@ -18,6 +18,8 @@ class ConnexionPDO {
         try {
             $this->conn = new PDO("mysql:host=$serveur;dbname=$bd;port=$port", $login, $mdp);
             $this->conn->query('SET CHARACTER SET utf8');
+            $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
         } catch (PDOException $e) {
             throw $e;
         }

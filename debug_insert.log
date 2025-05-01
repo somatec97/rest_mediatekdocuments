@@ -1,0 +1,7 @@
+REQUETE : INSERT INTO abonnement (id,dateFinAbonnement,idRevue) VALUES (:id,:dateFinAbonnement,:idRevue);
+CHAMPS : Array
+(
+    [id] => 3488
+    [dateFinAbonnement] => 2025-05-02
+    [idRevue] => 33
+)

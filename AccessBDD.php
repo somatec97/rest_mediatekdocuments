@@ -30,6 +30,8 @@ class AccessBDD {
      * @return lignes de la requete
      */
     public function selectAll($table){
+        //echo "table reçue dans selectAll: ";
+        //var_dump("table reçue dans selectAll: ", $table); 
         if($this->conn != null){
             switch ($table) {
                 case "livre" :
@@ -38,6 +40,10 @@ class AccessBDD {
                     return $this->selectAllDvd();
                 case "revue" :
                     return $this->selectAllRevues();
+                case "commandedocument" :
+                    return $this->selectAllCommandesDocument();
+                case "abonnementsecheance" :
+                    return $this->selectAllAbonnementsEcheance();
                 case "exemplaire" :
                     return $this->selectExemplairesRevue();
                 case "genre" :
@@ -66,6 +72,16 @@ class AccessBDD {
             switch($table){
                 case "exemplaire" :
                     return $this->selectExemplairesRevue($champs['id']);
+                case "dvd" :
+                    return $this->selectAllDvd($champs['id']);
+                case "revue" :
+                    return $this->selectAllRevues($champs['id']);
+                case "commandedocument" :
+                    return $this->selectAllCommandesDocument($champs['id']);
+                case "abonnement" :
+                    return $this->selectAllAbonnementsRevues($champs['id']);
+                case "exemplairesdocument":
+                    return $this->selectAllExemplairesDocument($champs['id']);
                 default:                    
                     // cas d'un select sur une table avec recherche sur des champs
                     return $this->selectTableOnConditons($table, $champs);					
@@ -163,15 +179,103 @@ class AccessBDD {
      * @return lignes de la requete
      */
     public function selectExemplairesRevue($id){
-        $param = array(
+    //var_dump($id); 
+    $param = array("id" => $id);
+    $req = "SELECT e.id, e.numero, e.dateAchat, e.photo, e.idEtat, et.libelle ";
+    $req .= "FROM exemplaire e ";
+    $req .= "JOIN document d ON e.id=d.id ";
+    $req .= "JOIN etat et ON e.idEtat = et.id ";
+    $req .= "WHERE d.id = :id ";
+    $req .= "ORDER BY e.dateAchat DESC";
+    return $this->conn->query($req, $param);
+}
+
+    /**
+     * récupération de toutes les commandes d'un document
+     * @param string $id id du document concerné
+     * @return lignes de la requete
+     */
+   
+    public function selectAllCommandesDocument($id = null) {
+    $param = [];
+    $req = "SELECT l.nbExemplaire, l.idLivreDvd, l.idSuivi, s.libelle, l.id, 
+                   MAX(c.dateCommande) AS dateCommande, SUM(c.montant) AS montant
+            FROM commandedocument l
+            JOIN suivi s ON s.id = l.idSuivi
+            LEFT JOIN commande c ON l.id = c.id ";
+
+    if (!empty($id)) {
+        $req .= "WHERE l.idLivreDvd = :id ";
+        $param = ["id" => $id];
+    }
+
+    $req .= "GROUP BY l.id ORDER BY dateCommande DESC";
+
+    return $this->conn->query($req, $param);
+    }
+    
+    /**
+     * récupération de tout les abonnements d'une revue
+     * @param string $id id de l'abonnement de la revue concernée
+     * @return lignes de la requete
+     */
+   
+    public function selectAllAbonnementsRevues($id){
+        $param = array(":id" => $id);
+
+    
+    $req = "SELECT a.id AS id, c.dateCommande, c.montant, a.dateFinAbonnement, a.idRevue, r.titre ";
+    $req .= "FROM commande c ";
+    $req .= "JOIN abonnement a ON c.id = a.id ";
+    $req .= "JOIN revue r ON r.id = a.idRevue ";
+    $req .= "WHERE a.idRevue = :id ";
+    $req .= "ORDER BY c.dateCommande DESC";
+
+    return $this->conn->queryAll($req, $param);
+    }
+
+
+ 
+    /**
+     * récupération de tout les abonnements arrivant à échéance dans 30 jours
+     * @return lignes de la requête
+     */
+   public function selectAllAbonnementsEcheance(){
+        $req = "SELECT a.id AS id, c.dateCommande, c.montant, a.dateFinAbonnement, a.idRevue, doc.titre 
+            FROM commande c 
+            JOIN abonnement a ON c.id = a.id 
+            JOIN revue r ON r.id = a.idRevue 
+            JOIN document doc ON doc.id = r.id
+            WHERE a.dateFinAbonnement <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)
+            ORDER BY a.dateFinAbonnement ASC";
+
+        try {
+            $res = $this->conn->query($req);
+            if (!$res) {
+                echo "<h2> La requête SQL a échoué.</h2>";
+            }
+            return $res;
+        }catch (Exception $e) {
+           // echo "<h2> Exception capturée :</h2><pre>" . $e->getMessage() . "</pre>";
+            return null;
+        }
+    }
+    
+    /**
+    * Récupération de tous les exemplaires d'un document
+    * @param string $id id du document concerné
+    * @return lignes de la requête
+    */
+    public function selectAllExemplairesDocument($id){
+    $param = array(
                 "id" => $id
         );
-        $req = "Select e.id, e.numero, e.dateAchat, e.photo, e.idEtat ";
-        $req .= "from exemplaire e join document d on e.id=d.id ";
-        $req .= "where e.id = :id ";
-        $req .= "order by e.dateAchat DESC";		
+        $req = "select ex.id, ex.numero, ex.dateAchat, ex.photo, ex.idEtat, et.libelle ";
+        $req .= "from exemplaire ex JOIN etat et ON ex.idEtat = et.id ";
+        $req .= "where ex.id = :id ";
+        $req .= "order by ex.dateAchat DESC";       
         return $this->conn->query($req, $param);
-    }		
+    }  
 
     /**
      * suppresion d'une ou plusieurs lignes dans une table
@@ -202,25 +306,40 @@ class AccessBDD {
      */	
     public function insertOne($table, $champs){
         if($this->conn != null && $champs != null){
-            // construction de la requête
-            $requete = "insert into $table (";
+            $requete = "INSERT INTO $table (";
             foreach ($champs as $key => $value){
-                $requete .= "$key,";
+                    $requete .= "$key,";
             }
-            // (enlève la dernière virgule)
-            $requete = substr($requete, 0, strlen($requete)-1);
-            $requete .= ") values (";
+            $requete = rtrim($requete, ",") . ") VALUES (";
             foreach ($champs as $key => $value){
                 $requete .= ":$key,";
             }
-            // (enlève la dernière virgule)
-            $requete = substr($requete, 0, strlen($requete)-1);
-            $requete .= ");";	
-            return $this->conn->execute($requete, $champs);		
-        }else{
+            $requete = rtrim($requete, ",") . ");";
+
+            // DEBUG : log de la requête
+            file_put_contents("debug_insert.log", "REQUETE : $requete\nCHAMPS : " . print_r($champs, true));
+
+            try {
+                #return $this->conn->execute($requete, $champs);
+                $ok = $this->conn->execute($requete, $champs);
+
+    if (!$ok) {
+        file_put_contents("pdo_error.log", "Échec de execute() sans exception.");
+    }
+
+    return $ok;
+            } catch (PDOException $e) {
+                file_put_contents("pdo_error.log", $e->getMessage()); // Écrit dans un fichier
+                echo "<h1>ERREUR PDO :</h1><pre>" . $e->getMessage() . "</pre>"; // S'affiche direct dans navigateur ou appel
+                exit;
+            }
+
+        } else {
             return null;
         }
+        
     }
+
 
     /**
      * modification d'une ligne dans une table
@@ -231,15 +350,93 @@ class AccessBDD {
      */	
     public function updateOne($table, $id, $champs){
         if($this->conn != null && $champs != null){
-            // construction de la requête
-            $requete = "update $table set ";
-            foreach ($champs as $key => $value){
-                $requete .= "$key=:$key,";
-            }
-            // (enlève la dernière virgule)
-            $requete = substr($requete, 0, strlen($requete)-1);				
-            $champs["id"] = $id;
-            $requete .= " where id=:id;";				
+            switch($table){
+ 
+
+                case "exemplairesdocument":
+ 
+
+                    $champsExemplaire = [
+ 
+
+                        'id' => $champs['Id'],
+ 
+
+                        'numero' => $champs['Numero'],
+ 
+
+                        'dateAchat' => $champs['DateAchat'],
+ 
+
+                        'photo' => $champs['Photo'],
+ 
+
+                        'idEtat' => $champs['IdEtat']
+ 
+
+                    ];
+ 
+
+                    $requete = "UPDATE exemplaire SET ";
+ 
+
+                    foreach ($champsExemplaire as $key => $value) {
+ 
+
+                        $requete .= "$key=:$key,";
+ 
+
+                    }
+ 
+
+                    $requete = substr($requete, 0, strlen($requete)-1);
+ 
+
+                    $requete .= " WHERE id=:id AND numero=:numero;";
+ 
+
+                    $champsExemplaire['numero'] = $id;
+ 
+
+                    $updateExemplaire = $this->conn->execute($requete, $champsExemplaire);   
+ 
+
+                    if(!$updateExemplaire){
+ 
+
+                        return null;
+ 
+
+                    }
+ 
+
+                default:
+ 
+
+                    $champs['id'] = $id;
+ 
+
+                    $requete = "UPDATE $table SET ";
+ 
+
+                    foreach ($champs as $key => $value) {
+ 
+
+                        $requete .= "$key=:$key,";
+ 
+
+                    }
+ 
+
+                    $requete = substr($requete, 0, strlen($requete)-1);
+ 
+
+                    $requete .= " WHERE id=:id;";
+ 
+
+                    return $this->conn->execute($requete, $champs);                 
+ 
+            }	
             return $this->conn->execute($requete, $champs);		
         }else{
             return null;
