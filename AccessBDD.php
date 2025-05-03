@@ -82,6 +82,8 @@ class AccessBDD {
                     return $this->selectAllAbonnementsRevues($champs['id']);
                 case "exemplairesdocument":
                     return $this->selectAllExemplairesDocument($champs['id']);
+                case "utilisateur":
+                    return $this->selectUtilisateur($champs['id']);
                 default:                    
                     // cas d'un select sur une table avec recherche sur des champs
                     return $this->selectTableOnConditons($table, $champs);					
@@ -256,7 +258,6 @@ class AccessBDD {
             }
             return $res;
         }catch (Exception $e) {
-           // echo "<h2> Exception capturée :</h2><pre>" . $e->getMessage() . "</pre>";
             return null;
         }
     }
@@ -275,6 +276,22 @@ class AccessBDD {
         $req .= "where ex.id = :id ";
         $req .= "order by ex.dateAchat DESC";       
         return $this->conn->query($req, $param);
+    }  
+    
+    /**
+     * récupération d'un utilisateur
+     * @param string $id de l'utilisateur
+     * @return lignes de la requete
+     */
+    public function selectUtilisateur($id)
+    {
+        $param = array(
+                "id" => $id
+        );
+        $req = "select u.login, u.password , u.idService, s.libelle  ";
+        $req .= "from utilisateur u  join service s on s.id=u.idService ";
+        $req .= "where u.login =:id  ";     
+        return $this->conn->queryAll($req, $param);
     }  
 
     /**
